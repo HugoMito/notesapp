@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { MsalProvider } from "@azure/msal-react";
 
+import Grid from '@mui/material/Grid';
+
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
 import logo3Hs from './assets/3Hs.png'
@@ -138,18 +140,24 @@ function App() {
           <img src={logo3Hs} className="logo 3hs" alt="3Hs logo" />
         </a>
       </div>
-      <h1>Vite + React + 3Hs</h1>
+      <h2>Vite + React + 3Hs</h2>
 
       <div>
         <h1>Azure OIDC Authentication</h1>
         {isLoggedIn ? (
-          <div>
-            <h2>Welcome, {user.name}</h2>
-            <button onClick={getAzureApplications}>Get First Application Name</button>
-            <p>Application name: {applicationName}</p>
-            <button onClick={getGitHubRepos}>Get GitHub Repos</button>
-            <p>GitHub Repo Full Name: {repoName}</p>
-          </div>
+          <Grid container spacing={1}>
+            <Grid size={{ xs: 12}} sx={{backgroundColor: "#3f51b5", color: "white", padding: 0, borderRadius: 4}}>
+              <h2>Welcome, {user.name}</h2>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 3}} sx={{border: "1px solid #ccc", padding: 1, borderRadius: 4}}>
+              <button onClick={getAzureApplications}>Get First Application Name</button>
+              <p>{applicationName}</p>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 3}} sx={{border: "1px solid #ccc", padding: 1, borderRadius: 4}}>
+              <button onClick={getGitHubRepos}>Get GitHub Repos</button>
+              <p>{repoName}</p>
+            </Grid>
+          </Grid>          
         ) : (
           <div>
             <button onClick={login}>Login with Microsoft</button>
@@ -160,4 +168,11 @@ function App() {
   );
 }
 
+          // <div>
+          //   <h2>Welcome, {user.name}</h2>
+          //   <button onClick={getAzureApplications}>Get First Application Name</button>
+          //   <p>Application name: {applicationName}</p>
+          //   <button onClick={getGitHubRepos}>Get GitHub Repos</button>
+          //   <p>GitHub Repo Full Name: {repoName}</p>
+          // </div>
 export default App;
