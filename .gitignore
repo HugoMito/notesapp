@@ -29,6 +29,6 @@ amplify_outputs*
 amplifyconfiguration*
 
 # My Ignore
-.env.*
 .env
+.env.*
 Archive

@@ -13,7 +13,9 @@ function App() {
   const [user, setUser] = useState(null);
   const [accessToken, setAccessToken] = useState(null);
   const [applicationName, setApplicationName] = useState("N/A");
-
+  const [repoName, setRepoName] = useState("N/A");
+  const gitHubPAT = import.meta.env.VITE_GITHUB_PAT;
+  
   useEffect(() => {
     const checkAccount = async () => {
       try {
@@ -70,7 +72,7 @@ function App() {
     msalInstance.loginRedirect(loginRequest);
   };
 
-  const getApplications = async () => {
+  const getAzureApplications = async () => {
     if (!accessToken) {
       console.error("No access token available.");
       return;
@@ -96,6 +98,33 @@ function App() {
     }
   };
 
+  const getGitHubRepos = async () => {
+    if (!gitHubPAT) {
+      console.error("No GitHub PAT available.");
+      return;
+    }
+
+    try {
+      const response = await fetch("https://api.github.com/user/repos", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${import.meta.env.VITE_GITHUB_PAT}`,
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // kktelas
+      const data = await response.json();
+      setRepoName(data.find(repo => repo.name === "notesapp")?.full_name || "N/A"); // Set the first repository's name
+    } catch (error) {
+      console.error("Error fetching GitHub repositories:", error);
+    }
+  }
+
   return (
     <MsalProvider instance={msalInstance}>
       <div>
@@ -116,8 +145,10 @@ function App() {
         {isLoggedIn ? (
           <div>
             <h2>Welcome, {user.name}</h2>
-            <button onClick={getApplications}>Get First Application Name</button>
+            <button onClick={getAzureApplications}>Get First Application Name</button>
             <p>Application name: {applicationName}</p>
+            <button onClick={getGitHubRepos}>Get GitHub Repos</button>
+            <p>GitHub Repo Full Name: {repoName}</p>
           </div>
         ) : (
           <div>
