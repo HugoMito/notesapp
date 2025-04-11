@@ -1,14 +1,103 @@
-import { useState } from 'react'
+import React, { useEffect, useState } from "react";
+import { MsalProvider } from "@azure/msal-react";
+
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
 import logo3Hs from './assets/3Hs.png'
-import './App.css'
+import './App.css';
+
+import { msalInstance } from "./main.jsx";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState(null);
+  const [accessToken, setAccessToken] = useState(null);
+  const [applicationName, setApplicationName] = useState("N/A");
+
+  useEffect(() => {
+    const checkAccount = async () => {
+      try {
+        // Handle redirect responses
+        const redirectResponse = await msalInstance.handleRedirectPromise();
+        if (redirectResponse) {
+          handleLoginSuccess(redirectResponse);
+        } else {
+          const accounts = msalInstance.getAllAccounts();
+          if (accounts.length > 0) {
+            setUser(accounts[0]); // Set user
+            setIsLoggedIn(true); // User is logged in
+
+            // Attempt to acquire a token silently
+            await acquireAccessToken(accounts[0]);
+          }
+        }
+      } catch (error) {
+        console.error("Error handling redirect promise: ", error);
+      }
+    };
+
+    checkAccount(); // Call the function to check account status
+  }, []);
+
+  const handleLoginSuccess = (authResult) => {
+    setUser(authResult.account);
+    setIsLoggedIn(true);
+    acquireAccessToken(authResult.account);
+  };
+
+  const acquireAccessToken = async (account) => {
+    const tokenRequest = {
+      scopes: ["openid", "profile", "User.Read", "Application.Read.All"],
+      account: account
+    };
+
+    try {
+      const response = await msalInstance.acquireTokenSilent(tokenRequest);
+      setAccessToken(response.accessToken);
+    } catch (error) {
+      console.error("Token acquisition failed:", error);
+      if (error instanceof msal.InteractionRequiredAuthError) {
+        // If interaction is required, login again
+        msalInstance.loginRedirect(tokenRequest);
+      }
+    }
+  };
+
+  const login = () => {
+    const loginRequest = {
+      scopes: ["openid", "profile", "User.Read", "Application.Read.All"] // Specify your desired scopes
+    };
+    msalInstance.loginRedirect(loginRequest);
+  };
+
+  const getApplications = async () => {
+    if (!accessToken) {
+      console.error("No access token available.");
+      return;
+    }
+
+    try {
+      const response = await fetch("https://graph.microsoft.com/v1.0/applications", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setApplicationName(data.value[0]?.displayName || "N/A"); // Set the first application's name
+    } catch (error) {
+      console.error("Error fetching applications:", error);
+    }
+  };
 
   return (
-    <>
+    <MsalProvider instance={msalInstance}>
       <div>
         <a href="https://vite.dev" target="_blank">
           <img src={viteLogo} className="logo" alt="Vite logo" />
@@ -21,19 +110,23 @@ function App() {
         </a>
       </div>
       <h1>Vite + React + 3Hs</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
+
+      <div>
+        <h1>Azure OIDC Authentication</h1>
+        {isLoggedIn ? (
+          <div>
+            <h2>Welcome, {user.name}</h2>
+            <button onClick={getApplications}>Get First Application Name</button>
+            <p>Application name: {applicationName}</p>
+          </div>
+        ) : (
+          <div>
+            <button onClick={login}>Login with Microsoft</button>
+          </div>
+        )}
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    </MsalProvider>
+  );
 }
 
-export default App
+export default App;
