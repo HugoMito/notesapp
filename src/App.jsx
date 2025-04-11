@@ -154,13 +154,13 @@ function App() {
               <p>{applicationName}</p>
             </Grid>
             <Grid size={{ xs: 12, sm: 3}} sx={{border: "1px solid #ccc", padding: 1, borderRadius: 4}}>
-              <button onClick={getGitHubRepos}>Get GitHub Repos</button>
+              <button onClick={getGitHubRepos}>Get First GitHub Repos</button>
               <p>{repoName}</p>
             </Grid>
           </Grid>          
         ) : (
           <div>
-            <button onClick={login}>Login with Microsoft</button>
+            <button onClick={login}>Login with Microsoft Azure</button>
           </div>
         )}
       </div>
